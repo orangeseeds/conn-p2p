@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 type Peer struct {
@@ -61,4 +62,29 @@ func (pm *PeerManager) Connect(addr string) (net.Conn, error) {
 	log.Println(pm.LAddr, "Connected to peer:", addr)
 	pm.Peers[addr].Conn = conn
 	return conn, nil
+}
+
+// sends a request to the addr to ask for addr's list of peers
+func (pm *PeerManager) DiscoverPeers(addr string) error {
+	conn, err := pm.Connect(addr)
+	if err != nil {
+		return err
+	}
+
+	client := NewPeerClient(conn, 2*time.Second)
+	list, err := client.GetPeerList()
+	if err != nil {
+		return err
+	}
+	pm.AddPeers(list...)
+
+	return nil
+}
+
+func (pm *PeerManager) GetPeerList() []string {
+	res := []string{}
+	for key := range pm.Peers {
+		res = append(res, key)
+	}
+	return res
 }
