@@ -36,6 +36,11 @@ func main() {
 			handleLIST_REQ(relay, msg, addr)
 		case p2p.SYNC:
 			relay.PeerManager.AddPeers(addr.String())
+			relay.WriteTo(p2p.Message{
+				Type:    p2p.SYNC_REP,
+				From:    relay.LAddr,
+				Payload: []byte(addr.String()),
+			}, addr)
 		}
 	}
 }

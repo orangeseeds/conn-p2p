@@ -18,6 +18,7 @@ const (
 	ACPT_FOR           = 0x7 // connection accept forwarded to the original sender
 	SYNC               = 0x8 // sync to connect to relay and remain connected
 	SYNC_CLOSE         = 0x9
+	SYNC_REP           = 0xA
 )
 
 func (m MsgType) String() string {

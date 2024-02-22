@@ -35,11 +35,14 @@ func main() {
 			continue
 		}
 
+		log.Printf("recv %v from %v\n", msg.Type.String(), addr.String())
 		switch msg.Type {
 		case p2p.CONN_FOR:
 			handleCONN_FOR(node, msg, addr)
 		case p2p.ACPT_FOR:
 			handleACPT_FOR(node, msg, addr)
+		case p2p.SYNC_REP:
+			node.PublicAddr = string(msg.Payload)
 		}
 	}
 }
@@ -63,17 +66,19 @@ func handshake(node *p2p.Node, relayAddr string, to string) error {
 		return err
 	}
 
-	connMsg := p2p.Message{
-		Type: p2p.CONN,
-		From: node.LAddr,
-	}
-	connMsg.InjectPayload(p2p.ConnPayload{
-		Addr:   to,
-		SentAt: time.Now().Unix(),
-	})
-	_, err = node.WriteTo(connMsg, toAddr)
-	if err != nil {
-		return err
+	for _, val := range node.PeerManager.Peers {
+		connMsg := p2p.Message{
+			Type: p2p.CONN,
+			From: node.LAddr,
+		}
+		connMsg.InjectPayload(p2p.ConnPayload{
+			Addr:   val.Addr,
+			SentAt: time.Now().Unix(),
+		})
+		_, err = node.WriteTo(connMsg, toAddr)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -98,7 +103,7 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 
 	go func() {
 		<-time.After(time.Duration(roundTime))
-		log.Println("Sent payload to", msg.From)
+		log.Println("Sent payload to", connPayload.Addr)
 	}()
 
 	node.WriteTo(reply, addr)
@@ -112,7 +117,7 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	log.Println("Sent payload to", msg.From)
+	log.Println("Sent payload to", addr)
 	return nil
 
 }

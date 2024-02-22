@@ -11,6 +11,7 @@ type HandlerFunc func(conn net.PacketConn, from net.Addr, msg Message)
 
 type Node struct {
 	LAddr        string
+	PublicAddr   string
 	ResolvedAddr *net.UDPAddr
 	PeerManager  *PeerManager
 	Listener     *net.UDPConn
@@ -24,7 +25,12 @@ func NewNode(addr string) *Node {
 		PeerManager: NewPeerManager(addr),
 		Listener:    nil,
 		Handler:     nil,
+		PublicAddr:  "",
 	}
+}
+
+func (n *Node) HasPublicAddr() bool {
+	return n.PublicAddr == ""
 }
 
 // Setup the listener and after settingup the listerner,
@@ -41,7 +47,7 @@ func (n *Node) Listen() error {
 	}
 	log.Println("Node is listening at: ", n.LAddr)
 	n.Listener = conn
-    n.PeerManager.Conn = conn
+	n.PeerManager.Conn = conn
 
 	// for {
 	// 	buff := make([]byte, 100)
