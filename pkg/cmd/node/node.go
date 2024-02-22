@@ -4,16 +4,18 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 
 	"github.com/orangeseeds/holepunching/pkg/p2p"
 )
 
+var msgRecv chan bool = make(chan bool)
+
 func main() {
 	laddr := flag.String("laddr", "127.0.0.1:1111", "laddr")
 	relayAddr := flag.String("relayAddr", "127.0.0.1:1112", "relay addr")
-	to := flag.String("raddr", "127.0.0.1:1113", "raddr")
 
 	flag.Parse()
 	node := p2p.NewNode(*laddr)
@@ -22,7 +24,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = handshake(node, *relayAddr, *to)
+	err = handshake(node, *relayAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,7 +33,7 @@ func main() {
 
 		_, addr, err := node.ReadMsg(&msg)
 		if err != nil {
-			log.Println(err)
+			log.Println("Error reading msg", err)
 			continue
 		}
 
@@ -47,11 +49,13 @@ func main() {
 			if err != nil {
 				log.Println("Error handing acpt_for: ", err)
 			}
+		case p2p.MSG:
+			msgRecv <- true
 		}
 	}
 }
 
-func handshake(node *p2p.Node, relayAddr string, to string) error {
+func handshake(node *p2p.Node, relayAddr string) error {
 	toAddr, err := net.ResolveUDPAddr("udp", relayAddr)
 	if err != nil {
 		return err
@@ -116,7 +120,6 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		From: node.PublicAddr,
 	}
 
-	time.Sleep(300 * time.Millisecond)
 	roundTime := time.Now().UnixNano() - connPayload.SentAt
 
 	reply.InjectPayload(p2p.ConnPayload{
@@ -129,22 +132,31 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	log.Println("Waiting for t/2: ", roundTime)
+	log.Println("Waiting for t/2: ", roundTime/2)
 	<-time.After(time.Duration(roundTime / 2))
-	log.Println("to: Sent payload to", msg.From)
-	toAddr, err := net.ResolveUDPAddr("udp", msg.From)
-	if err != nil {
-		return err
+
+	for {
+		select {
+		case <-msgRecv:
+			return nil
+		default:
+			<-time.After(time.Duration(rand.Intn(201) * int(time.Millisecond)))
+			toAddr, err := net.ResolveUDPAddr("udp", msg.From)
+			if err != nil {
+				return err
+			}
+			log.Println("Sent payload from", node.Listener.LocalAddr().String(), "to", toAddr.String())
+			_, err = node.WriteTo(p2p.Message{
+				Type:    p2p.MSG,
+				From:    node.PublicAddr,
+				Payload: []byte("Hello"),
+			}, toAddr)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+		}
 	}
-	_, err = node.WriteTo(p2p.Message{
-		Type:    p2p.MSG,
-		From:    node.PublicAddr,
-		Payload: []byte("Hello"),
-	}, toAddr)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
@@ -154,17 +166,18 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	log.Println("from: Sent payload to", msg.From)
 	toAddr, err := net.ResolveUDPAddr("udp", msg.From)
 	if err != nil {
 		return err
 	}
+	log.Println("Sent payload from", node.Listener.LocalAddr().String(), "to", toAddr.String())
 	_, err = node.WriteTo(p2p.Message{
 		Type:    p2p.MSG,
 		From:    node.PublicAddr,
 		Payload: []byte("Hello"),
 	}, toAddr)
 	if err != nil {
+		log.Println(err)
 		return err
 	}
 	return nil
