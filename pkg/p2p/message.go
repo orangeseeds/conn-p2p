@@ -19,6 +19,7 @@ const (
 	SYNC       MsgType = 0x8 // sync to connect to relay and remain connected
 	SYNC_CLOSE MsgType = 0x9
 	SYNC_REP   MsgType = 0xA
+	INIT_PUNCH MsgType = 0xB
 )
 
 func (m MsgType) String() string {
@@ -43,6 +44,8 @@ func (m MsgType) String() string {
 		return "SYNC_CLOSE"
 	case SYNC_REP:
 		return "SYNC_REP"
+	case INIT_PUNCH:
+		return "INIT_PUNCH"
 	}
 	return "NONE"
 }

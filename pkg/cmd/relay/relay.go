@@ -70,17 +70,6 @@ func handleCONN(relay *p2p.Node, msg p2p.Message) error {
 		return err
 	}
 
-	to, err := net.ResolveUDPAddr("udp", msg.From)
-	if err != nil {
-		return err
-	}
-
-	relay.WriteTo(p2p.Message{
-		Type:    p2p.MSG,
-		From:    relay.PublicAddr,
-		Payload: []byte("Hello"),
-	}, to)
-
 	// Forward CONN message to n2
 	_, err = relay.WriteTo(p2p.Message{
 		Type:    p2p.CONN_FOR,
