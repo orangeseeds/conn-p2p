@@ -49,6 +49,20 @@ func handshake(node *p2p.Node, relayAddr string, to string) error {
 	if err != nil {
 		return err
 	}
+
+	_, err = node.WriteTo(p2p.Message{
+		Type: p2p.SYNC,
+		From: node.LAddr,
+	}, toAddr)
+	if err != nil {
+		return err
+	}
+
+	err = node.PeerManager.DiscoverPeers(relayAddr)
+	if err != nil {
+		return err
+	}
+
 	connMsg := p2p.Message{
 		Type: p2p.CONN,
 		From: node.LAddr,
@@ -98,7 +112,7 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-		log.Println("Sent payload to", msg.From)
+	log.Println("Sent payload to", msg.From)
 	return nil
 
 }

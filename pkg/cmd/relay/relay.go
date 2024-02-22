@@ -26,16 +26,31 @@ func main() {
 			continue
 		}
 
-        log.Printf("recv %v from %v\n", msg.Type, addr.String())
+		log.Printf("recv %v from %v\n", msg.Type.String(), addr.String())
 		switch msg.Type {
 		case p2p.CONN:
 			handleCONN(relay, msg)
 		case p2p.ACPT:
 			handleACPT(relay, msg)
+		case p2p.LIST_REQ:
+			handleLIST_REQ(relay, msg, addr)
 		case p2p.SYNC:
-			log.Println("received SYNC from: ", msg.From)
+			relay.PeerManager.AddPeers(addr.String())
 		}
 	}
+}
+
+func handleLIST_REQ(relay *p2p.Node, msg p2p.Message, addr net.Addr) error {
+	resp := p2p.Message{
+		Type: p2p.LIST,
+		From: relay.LAddr,
+	}
+	resp.InjectPayload(relay.PeerManager.GetPeerList())
+	_, err := relay.WriteTo(resp, addr)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func handleCONN(relay *p2p.Node, msg p2p.Message) error {
