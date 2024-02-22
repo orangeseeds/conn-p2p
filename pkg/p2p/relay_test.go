@@ -34,7 +34,7 @@ func TestRelay(t *testing.T) {
 	wMsg := Message{Type: CONN, From: n2.LAddr}
 	wMsg.InjectPayload(ConnPayload{
 		Addr:   addr2,
-		SentAt: time.Now().Unix(),
+		SentAt: time.Now().UnixNano(),
 	})
 	_, err = n1.WriteTo(wMsg, relay.ResolvedAddr)
 	if err != nil {
@@ -84,7 +84,7 @@ func TestRelay(t *testing.T) {
 	aMsg := Message{Type: ACPT, From: n1.LAddr}
 	wMsg.InjectPayload(ConnPayload{
 		Addr:   addr2,
-		SentAt: time.Now().Unix(),
+		SentAt: time.Now().UnixNano(),
 	})
 	_, err = n1.WriteTo(aMsg, relay.ResolvedAddr)
 	if err != nil {
