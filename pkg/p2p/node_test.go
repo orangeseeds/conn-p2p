@@ -3,34 +3,39 @@ package p2p
 import (
 	"net"
 	"testing"
-	"time"
 )
 
 func TestDiscoverPeers(t *testing.T) {
 
 	n1 := NewNode("127.0.0.1:1111")
 	n2 := NewNode("127.0.0.1:1112")
+	err := n1.Listen()
+	if err != nil {
+		t.Fatal("node listening failed:", err)
+	}
+	err = n2.Listen()
+	if err != nil {
+		t.Fatal("node listening failed:", err)
+	}
 
-	n1.Handler = func(conn net.PacketConn, from net.Addr, msg Message) {
-		switch msg.Type {
-		case LIST_REQ:
+	go func(t *testing.T) {
+		var msg Message
+		_, addr, err := n1.ReadMsg(&msg)
+		if err != nil {
+			t.Fatal("error reading msg", err)
+		}
+
+		if msg.Type == LIST_REQ {
 			resp := Message{
 				Type: LIST,
 				From: n1.LAddr,
 			}
 			resp.InjectPayload(n1.PeerManager.GetPeerList())
-			conn.WriteTo(EncodeMsg(resp), from)
+			n1.WriteTo(resp, addr)
 		}
-	}
-	go func() {
-		err := n1.Listen()
-		if err != nil {
-			t.Log("node listening failed:", err)
-			return
-		}
-	}()
+	}(t)
 
-	err := n2.PeerManager.DiscoverPeers(n1.LAddr)
+	err = n2.PeerManager.DiscoverPeers(n1.LAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,6 +44,7 @@ func TestDiscoverPeers(t *testing.T) {
 		t.Logf("%v", p.Addr)
 	}
 }
+
 func TestPeerMsg(t *testing.T) {
 
 	payload_msg := "hello there"
@@ -62,18 +68,46 @@ func TestPeerMsg(t *testing.T) {
 		}
 	}()
 
-	conn, err := n2.PeerManager.Connect(n1.LAddr)
+	err := n2.PeerManager.Connect(n1.LAddr)
 	if err != nil {
 		t.Fatal(err)
 	}
+	// msg := Message{
+	// 	Type:    MSG,
+	// 	From:    n2.LAddr,
+	// 	Payload: []byte(payload_msg),
+	// }
 
-	msg := Message{
+	// conn.Write(EncodeMsg(msg))
+	// time.Sleep(200 * time.Millisecond)
+}
+
+func TestListenerSend(t *testing.T) {
+	n1 := NewNode("127.0.0.1:1122")
+	n1.Listen()
+
+	n2 := NewNode("127.0.0.1:1123")
+	n2.Listen()
+
+	add, err := net.ResolveUDPAddr("udp", n1.LAddr)
+	if err != nil {
+		t.Fatal("Resolve error", err)
+	}
+
+	_, err = n2.WriteTo(Message{
 		Type: MSG,
 		From: n2.LAddr,
-        Payload: []byte(payload_msg),
+	}, add)
+	if err != nil {
+		t.Fatal("Write error", err)
 	}
-	conn.Write(EncodeMsg(msg))
-	time.Sleep(200 * time.Millisecond)
+
+	var msg Message
+	_, _, err = n1.ReadMsg(&msg)
+	if err != nil {
+		t.Fatal("Read error", err)
+	}
+
 }
 
 // func runNode(t *testing.T, laddr string, raddr string) {
