@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -42,7 +43,6 @@ func main() {
 		case p2p.ACPT_FOR:
 			handleACPT_FOR(node, msg, addr)
 		case p2p.SYNC_REP:
-			node.PublicAddr = string(msg.Payload)
 		}
 	}
 }
@@ -61,24 +61,40 @@ func handshake(node *p2p.Node, relayAddr string, to string) error {
 		return err
 	}
 
+	var msg p2p.Message
+	_, _, err = node.ReadMsg(&msg)
+	if err != nil {
+		return err
+	}
+	node.PublicAddr = string(msg.Payload)
+	log.Println("my addr:", node.PublicAddr)
+
 	err = node.PeerManager.DiscoverPeers(relayAddr)
 	if err != nil {
 		return err
 	}
 
 	for _, val := range node.PeerManager.Peers {
-		connMsg := p2p.Message{
-			Type: p2p.CONN,
-			From: node.LAddr,
-		}
-		connMsg.InjectPayload(p2p.ConnPayload{
-			Addr:   val.Addr,
-			SentAt: time.Now().Unix(),
-		})
-		_, err = node.WriteTo(connMsg, toAddr)
-		if err != nil {
-			return err
-		}
+		fmt.Println(val.Addr)
+	}
+
+	val := ""
+	fmt.Scanf("%s", &val)
+	if val == "" {
+		return nil
+	}
+	log.Println("Selected: ", val)
+	connMsg := p2p.Message{
+		Type: p2p.CONN,
+		From: node.LAddr,
+	}
+	connMsg.InjectPayload(p2p.ConnPayload{
+		Addr:   val,
+		SentAt: time.Now().Unix(),
+	})
+	_, err = node.WriteTo(connMsg, toAddr)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -103,7 +119,7 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 
 	go func() {
 		<-time.After(time.Duration(roundTime))
-		log.Println("Sent payload to", connPayload.Addr)
+        log.Println("to: Sent payload to", connPayload.Addr)
 	}()
 
 	node.WriteTo(reply, addr)
@@ -117,7 +133,7 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	log.Println("Sent payload to", addr)
+    log.Println("from: Sent payload to", addr)
 	return nil
 
 }

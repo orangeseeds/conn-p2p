@@ -39,13 +39,13 @@ func (pc *PeerClient) GetPeerList() ([]string, error) {
 	}
 
 	var msg Message
-    err = DecodeMsg(data[:n], &msg)
-    if err != nil {
-        return nil, err
-    }
+	err = DecodeMsg(data[:n], &msg)
+	if err != nil {
+		return nil, err
+	}
 
 	if msg.Type != LIST {
-		return nil, fmt.Errorf("Invalid message type: %v, expected %v", msg.Type, LIST)
+		return nil, fmt.Errorf("Invalid message type: %v-%v, expected %v", msg.Type,msg.Type.Value(), LIST.String())
 	}
 
 	var buff bytes.Buffer

@@ -10,15 +10,15 @@ type MsgType int
 
 const (
 	LIST_REQ   MsgType = 0x1 // Requests peers neighbour list
-	LIST               = 0x2 // neighbour list response
-	MSG                = 0x3 // regular string message
-	CONN               = 0x4 // connection request sent to the relay
-	CONN_FOR           = 0x5 // connection request forwarded to the destination
-	ACPT               = 0x6 // connection accept from the destination to the relay
-	ACPT_FOR           = 0x7 // connection accept forwarded to the original sender
-	SYNC               = 0x8 // sync to connect to relay and remain connected
-	SYNC_CLOSE         = 0x9
-	SYNC_REP           = 0xA
+	LIST       MsgType = 0x2 // neighbour list response
+	MSG        MsgType = 0x3 // regular string message
+	CONN       MsgType = 0x4 // connection request sent to the relay
+	CONN_FOR   MsgType = 0x5 // connection request forwarded to the destination
+	ACPT       MsgType = 0x6 // connection accept from the destination to the relay
+	ACPT_FOR   MsgType = 0x7 // connection accept forwarded to the original sender
+	SYNC       MsgType = 0x8 // sync to connect to relay and remain connected
+	SYNC_CLOSE MsgType = 0x9
+	SYNC_REP   MsgType = 0xA
 )
 
 func (m MsgType) String() string {
@@ -41,8 +41,13 @@ func (m MsgType) String() string {
 		return "SYNC"
 	case SYNC_CLOSE:
 		return "SYNC_CLOSE"
+	case SYNC_REP:
+		return "SYNC_REP"
 	}
 	return "NONE"
+}
+func (m MsgType) Value() int {
+	return int(m)
 }
 
 type ConnPayload struct {

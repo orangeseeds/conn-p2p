@@ -71,11 +71,14 @@ func handleCONN(relay *p2p.Node, msg p2p.Message) error {
 	}
 
 	// Forward CONN message to n2
-	relay.WriteTo(p2p.Message{
+	_, err = relay.WriteTo(p2p.Message{
 		Type:    p2p.CONN_FOR,
 		From:    msg.From,
 		Payload: msg.Payload,
 	}, toAddr)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -92,10 +95,13 @@ func handleACPT(relay *p2p.Node, msg p2p.Message) error {
 	}
 
 	// Forward CONN message to n2
-	relay.WriteTo(p2p.Message{
+	_, err = relay.WriteTo(p2p.Message{
 		Type:    p2p.ACPT_FOR,
 		From:    msg.From,
 		Payload: msg.Payload,
 	}, toAddr)
+	if err != nil {
+		return err
+	}
 	return nil
 }
