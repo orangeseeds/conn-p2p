@@ -49,25 +49,6 @@ func (n *Node) Listen() error {
 	n.Listener = conn
 	n.PeerManager.Conn = conn
 
-	// for {
-	// 	buff := make([]byte, 100)
-	// 	read, addr, err := conn.ReadFrom(buff)
-	// 	if err != nil {
-	// 		log.Println("Error reading msg", err)
-	// 		continue
-	// 	}
-	// 	var msg Message
-	// 	err = DecodeMsg(buff[:read], &msg)
-	// 	if err != nil {
-	// 		log.Println("Error decoding msg", err)
-	// 		continue
-	// 	}
-	//
-	// 	if n.Handler == nil {
-	// 		return fmt.Errorf("Handler is not assigned.")
-	// 	}
-	// 	n.Handler(conn, addr, msg)
-	// }
 	return nil
 }
 
