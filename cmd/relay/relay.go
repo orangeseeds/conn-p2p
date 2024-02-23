@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/orangeseeds/holepunching/pkg/p2p"
+	"github.com/orangeseeds/holepunching/p2p"
 )
 
 func main() {

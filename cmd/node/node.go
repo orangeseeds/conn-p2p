@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/orangeseeds/holepunching/pkg/p2p"
+	"github.com/orangeseeds/holepunching/p2p"
 )
 
 var msgRecv chan bool = make(chan bool)
