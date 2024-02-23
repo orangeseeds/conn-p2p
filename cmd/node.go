@@ -8,24 +8,22 @@ import (
 	"net"
 	"time"
 
-	"github.com/orangeseeds/holepunching/p2p"
+	"github.com/orangeseeds/udp-holepunching/p2p"
 )
 
 var msgRecv chan bool = make(chan bool)
 var msgRecv1 chan bool = make(chan bool)
 
-func main() {
-	laddr := flag.String("laddr", "127.0.0.1:1111", "laddr")
-	relayAddr := flag.String("relayAddr", "127.0.0.1:1112", "relay addr")
+func runNode(laddr string, relayAddr string) {
 
 	flag.Parse()
-	node := p2p.NewNode(*laddr)
+	node := p2p.NewNode(laddr)
 	err := node.Listen()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = handshake(node, *relayAddr)
+	err = handshake(node, relayAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

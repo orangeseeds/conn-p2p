@@ -5,13 +5,12 @@ import (
 	"log"
 	"net"
 
-	"github.com/orangeseeds/holepunching/p2p"
+	"github.com/orangeseeds/udp-holepunching/p2p"
 )
 
-func main() {
-	laddr := flag.String("laddr", "127.0.0.1:1111", "laddr")
+func runRelay(laddr string) {
 	flag.Parse()
-	relay := p2p.NewNode(*laddr)
+	relay := p2p.NewNode(laddr)
 	err := relay.Listen()
 	if err != nil {
 		log.Fatal(err)

@@ -1,3 +1,3 @@
-module github.com/orangeseeds/holepunching
+module github.com/orangeseeds/udp-holepunching
 
-go 1.21.6
+go 1.22.0
