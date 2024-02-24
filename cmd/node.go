@@ -166,23 +166,15 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 	log.Println("sending MSG after t/2", msg.From)
 
 	time.AfterFunc(time.Duration(rtt/2), func() {
-		attempt := 0
-		for {
-			<-time.After(time.Millisecond * time.Duration(rand.Intn(200)))
-			log.Println("sent at", time.Now().UnixNano())
-			_, err := node.WriteTo(p2p.Message{
-				Type:    p2p.MSG,
-				From:    node.PublicAddr,
-				Payload: []byte("Apple"),
-			}, rAddr)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-			attempt++
-			if attempt > 100 {
-				return
-			}
+		log.Println("sent at", time.Now().UnixNano())
+		_, err := node.WriteTo(p2p.Message{
+			Type:    p2p.MSG,
+			From:    node.PublicAddr,
+			Payload: []byte("Apple"),
+		}, rAddr)
+		if err != nil {
+			log.Println(err)
+			return
 		}
 	})
 	return nil
@@ -194,21 +186,14 @@ func handleINIT_PUNCH(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	attempt := 0
-	for {
-		<-time.After(time.Millisecond * time.Duration(rand.Intn(200)))
-		log.Println("sent at", time.Now().UnixNano())
-		_, err = node.WriteTo(p2p.Message{
-			Type:    p2p.MSG,
-			From:    node.PublicAddr,
-			Payload: []byte("Apple"),
-		}, rAddr)
-		if err != nil {
-			return err
-		}
-		attempt++
-		if attempt > 100 {
-			return nil
-		}
+	log.Println("sent at", time.Now().UnixNano())
+	_, err = node.WriteTo(p2p.Message{
+		Type:    p2p.MSG,
+		From:    node.PublicAddr,
+		Payload: []byte("Apple"),
+	}, rAddr)
+	if err != nil {
+		return err
 	}
+	return nil
 }
