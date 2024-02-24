@@ -49,7 +49,7 @@ func runRelay(laddr string) {
 			}
 			faddr, err := net.ResolveUDPAddr("udp", connPayload.Addr)
 			if err != nil {
-				log.Println("ERR",err)
+				log.Println("ERR", err)
 				continue
 			}
 			relay.WriteTo(msg, faddr)
@@ -107,7 +107,7 @@ func handleACPT(relay *p2p.Node, msg p2p.Message) error {
 	}
 
 	// Forward CONN message to n2
-    to := p2p.Message{
+	to := p2p.Message{
 		Type:    p2p.ACPT_FOR,
 		From:    msg.From,
 		Payload: msg.Payload,

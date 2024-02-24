@@ -165,6 +165,8 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 	log.Println("sending MSG after t/2", msg.From)
 
 	time.AfterFunc(time.Duration(rtt/2), func() {
+
+		log.Println("sent at", time.Now().UnixNano())
 		_, err := node.WriteTo(p2p.Message{
 			Type:    p2p.MSG,
 			From:    node.PublicAddr,
@@ -184,6 +186,7 @@ func handleINIT_PUNCH(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
+	log.Println("sent at", time.Now().UnixNano())
 	_, err = node.WriteTo(p2p.Message{
 		Type:    p2p.MSG,
 		From:    node.PublicAddr,
