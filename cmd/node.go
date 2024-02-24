@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"time"
 
@@ -48,9 +47,14 @@ func runNode(laddr string, relayAddr string) {
 			if err != nil {
 				log.Println("Error handing acpt_for: ", err)
 			}
+		case p2p.INIT_PUNCH:
+			err = handleINIT_PUNCH(node, msg, addr)
+			if err != nil {
+				log.Println("Error handing acpt_for: ", err)
+			}
 		case p2p.MSG:
 			log.Println("Test", string(msg.Payload), "from", addr.String())
-			msgRecv <- true
+			// msgRecv <- true
 		}
 	}
 }
@@ -94,10 +98,12 @@ func handshake(node *p2p.Node, relayAddr string) error {
 		Type: p2p.CONN,
 		From: node.PublicAddr,
 	}
+	timestamp := time.Now().UnixNano()
 	connMsg.InjectPayload(p2p.ConnPayload{
 		Addr:   val,
-		SentAt: time.Now().UnixNano(),
+		SentAt: timestamp,
 	})
+
 	_, err = node.WriteTo(connMsg, toAddr)
 	if err != nil {
 		return err
@@ -116,8 +122,6 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		From: node.PublicAddr,
 	}
 
-	roundTime := time.Now().UnixNano() - connPayload.SentAt
-
 	reply.InjectPayload(p2p.ConnPayload{
 		Addr:   msg.From,
 		SentAt: connPayload.SentAt,
@@ -127,35 +131,6 @@ func handleCONN_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 	if err != nil {
 		return err
 	}
-
-	log.Println("Waiting for t/2: ", roundTime)
-
-	go func() {
-		toAddr, err := net.ResolveUDPAddr("udp", msg.From)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		<-time.After(time.Duration(roundTime))
-		for {
-			select {
-			case <-msgRecv:
-				return
-			default:
-				<-time.After(time.Duration(time.Millisecond * time.Duration(rand.Intn(2001))))
-				log.Println("Sent payload from to", toAddr.String())
-				// log.Println("Run at: ", time.Now().UnixNano())
-				_, err = node.WriteTo(p2p.Message{
-					Type:    p2p.MSG,
-					From:    node.PublicAddr,
-					Payload: []byte("Hello"),
-				}, toAddr)
-				if err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}()
 	return nil
 }
 
@@ -166,31 +141,56 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		return err
 	}
 
-	go func() {
-		toAddr, err := net.ResolveUDPAddr("udp", msg.From)
+	rtt := time.Now().UnixNano() - connPayload.SentAt
+
+	toPeer := p2p.Message{
+		Type: p2p.INIT_PUNCH,
+		From: node.PublicAddr,
+	}
+	toPeer.InjectPayload(p2p.ConnPayload{
+		Addr:   msg.From, // change this
+		SentAt: 0,
+	})
+
+	_, err = node.WriteTo(toPeer, addr)
+	if err != nil {
+		return err
+	}
+
+	log.Println("sending INIT_PUNCH to", addr)
+	rAddr, err := net.ResolveUDPAddr("udp", msg.From)
+	if err != nil {
+		return err
+	}
+	log.Println("sending MSG after t/2", msg.From)
+
+	time.AfterFunc(time.Duration(rtt/2), func() {
+		_, err := node.WriteTo(p2p.Message{
+			Type:    p2p.MSG,
+			From:    node.PublicAddr,
+			Payload: []byte("Apple"),
+		}, rAddr)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		for {
-			select {
-			case <-msgRecv:
-				return
-			default:
-				<-time.After(time.Duration(time.Millisecond * time.Duration(rand.Intn(2001))))
-				log.Println("Sent payload from to", toAddr.String())
-				// log.Println("Run at: ", time.Now().UnixNano())
-				_, err = node.WriteTo(p2p.Message{
-					Type:    p2p.MSG,
-					From:    node.PublicAddr,
-					Payload: []byte("Hello"),
-				}, toAddr)
-				if err != nil {
-					log.Println(err)
-				}
-			}
-		}
-	}()
+	})
+	return nil
+}
 
+func handleINIT_PUNCH(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
+	rAddr, err := net.ResolveUDPAddr("udp", msg.From)
+	if err != nil {
+		return err
+	}
+
+	_, err = node.WriteTo(p2p.Message{
+		Type:    p2p.MSG,
+		From:    node.PublicAddr,
+		Payload: []byte("Apple"),
+	}, rAddr)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -40,6 +40,19 @@ func runRelay(laddr string) {
 				From:    relay.LAddr,
 				Payload: []byte(addr.String()),
 			}, addr)
+		case p2p.INIT_PUNCH:
+			var connPayload p2p.ConnPayload
+			err := msg.DecodeConnPayload(&connPayload)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			faddr, err := net.ResolveUDPAddr("udp", connPayload.Addr)
+			if err != nil {
+				log.Println("ERR",err)
+				continue
+			}
+			relay.WriteTo(msg, faddr)
 		}
 	}
 }
@@ -94,11 +107,12 @@ func handleACPT(relay *p2p.Node, msg p2p.Message) error {
 	}
 
 	// Forward CONN message to n2
-	_, err = relay.WriteTo(p2p.Message{
+    to := p2p.Message{
 		Type:    p2p.ACPT_FOR,
 		From:    msg.From,
 		Payload: msg.Payload,
-	}, toAddr)
+	}
+	_, err = relay.WriteTo(to, toAddr)
 	if err != nil {
 		return err
 	}
