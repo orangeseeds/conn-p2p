@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 
@@ -167,6 +168,7 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 	time.AfterFunc(time.Duration(rtt/2), func() {
 		attempt := 0
 		for {
+			<-time.After(time.Millisecond * time.Duration(rand.Intn(200)))
 			log.Println("sent at", time.Now().UnixNano())
 			_, err := node.WriteTo(p2p.Message{
 				Type:    p2p.MSG,
@@ -177,10 +179,10 @@ func handleACPT_FOR(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 				log.Println(err)
 				return
 			}
-            attempt++
-            if attempt>100{
-                return
-            }
+			attempt++
+			if attempt > 100 {
+				return
+			}
 		}
 	})
 	return nil
@@ -194,6 +196,7 @@ func handleINIT_PUNCH(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 
 	attempt := 0
 	for {
+		<-time.After(time.Millisecond * time.Duration(rand.Intn(200)))
 		log.Println("sent at", time.Now().UnixNano())
 		_, err = node.WriteTo(p2p.Message{
 			Type:    p2p.MSG,
@@ -203,7 +206,7 @@ func handleINIT_PUNCH(node *p2p.Node, msg p2p.Message, addr net.Addr) error {
 		if err != nil {
 			return err
 		}
-        attempt++
+		attempt++
 		if attempt > 100 {
 			return nil
 		}
