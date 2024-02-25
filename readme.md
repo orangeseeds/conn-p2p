@@ -25,5 +25,3 @@ go run ./cmd/ -c -p :[CLIENT_PORT] -rAddr [RELAY_IP]:[RELAY_PORT]
 ```
 go run ./cmd/ -s -p :[PORT]
 ```
-
-
